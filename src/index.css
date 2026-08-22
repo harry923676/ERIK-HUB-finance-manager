@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    border-color: var(--color-slate-200, #e2e8f0);
+  }
+  .dark * {
+    border-color: var(--color-slate-800, #1e293b);
+  }
+}
+
+/* 5-Second Periodic Shine Effect for Pawan Paji */
+@keyframes pawan-paji-shine-sweep {
+  0% {
+    background-position: -200% center;
+    filter: drop-shadow(0 0 0px rgba(245, 158, 11, 0));
+  }
+  15% {
+    background-position: 200% center;
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.7)) drop-shadow(0 0 16px rgba(251, 191, 36, 0.5));
+  }
+  22%, 100% {
+    background-position: 200% center;
+    filter: drop-shadow(0 0 0px rgba(245, 158, 11, 0));
+  }
+}
+
+@keyframes pawan-star-sparkle {
+  0%, 100% {
+    transform: scale(0.9) rotate(0deg);
+    opacity: 0.7;
+  }
+  7% {
+    transform: scale(1.35) rotate(90deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 6px #f59e0b);
+  }
+  15% {
+    transform: scale(1) rotate(180deg);
+    opacity: 0.85;
+  }
+  22%, 100% {
+    transform: scale(0.9) rotate(0deg);
+    opacity: 0.7;
+  }
+}
+
+.shine-text-pawan {
+  background: linear-gradient(
+    110deg,
+    #4f46e5 0%,
+    #7c3aed 18%,
+    #d97706 38%,
+    #fbbf24 45%,
+    #ffffff 50%,
+    #fbbf24 55%,
+    #d97706 62%,
+    #7c3aed 82%,
+    #4f46e5 100%
+  );
+  background-size: 260% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: pawan-paji-shine-sweep 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  display: inline-block;
+  will-change: background-position, filter;
+}
+
+.dark .shine-text-pawan {
+  background: linear-gradient(
+    110deg,
+    #818cf8 0%,
+    #a78bfa 18%,
+    #f59e0b 38%,
+    #fde047 45%,
+    #ffffff 50%,
+    #fde047 55%,
+    #f59e0b 62%,
+    #a78bfa 82%,
+    #818cf8 100%
+  );
+  background-size: 260% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: pawan-paji-shine-sweep 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  display: inline-block;
+  will-change: background-position, filter;
+}
+
+.shine-star-sparkle {
+  animation: pawan-star-sparkle 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  display: inline-block;
+  transform-origin: center;
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.5);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.8);
+}

@@ -1,0 +1,6 @@
+{
+  "name": "ERIK-HUB Finance manager",
+  "description": "ERIK-HUB Finance manager - A comprehensive business organizer and financial management platform for tracking orders, payments, expenditures, revenue, profit, and customer accounts with real-time automatic financial calculations and rich analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
