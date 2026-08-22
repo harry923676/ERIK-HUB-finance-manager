@@ -136,20 +136,8 @@ export const TopNav: React.FC<TopNavProps> = ({ onMobileMenuClick }) => {
           </div>
         </div>
 
-        {/* Right Side: Global Search + Developer Credit + Controls */}
-        <div className="flex items-center gap-2.5 sm:gap-4 lg:gap-5">
-          {/* Header Developer Credit */}
-          <div 
-            id="header-developer-credit"
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 bg-slate-100/90 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 shadow-2xs select-none transition-colors shrink-0"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500 shine-star-sparkle shrink-0" />
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline">developed by</span>
-            <span className="font-extrabold tracking-wide shine-text-pawan font-['Outfit'] cursor-default text-xs sm:text-xs">
-              Pawan Paji
-            </span>
-          </div>
-
+        {/* Right Side: Global Search + Controls */}
+        <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4 shrink-0">
           {/* Search Bar */}
           <div className="relative hidden md:block">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -159,7 +147,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMobileMenuClick }) => {
               placeholder="Search records..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="bg-slate-100 dark:bg-slate-800 border-none rounded-full py-2 pl-10 pr-8 text-sm w-48 lg:w-64 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
+              className="bg-slate-100 dark:bg-slate-800 border-none rounded-full py-2 pl-10 pr-8 text-sm w-44 lg:w-60 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
             />
             {searchQuery && (
               <button
@@ -176,11 +164,11 @@ export const TopNav: React.FC<TopNavProps> = ({ onMobileMenuClick }) => {
             <button
               id="date-filter-dropdown-btn"
               onClick={() => setDateDropdownOpen(!dateDropdownOpen)}
-              className="flex items-center gap-2 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-colors shrink-0 cursor-pointer"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-colors shrink-0 cursor-pointer"
             >
-              <Calendar className="w-4 h-4 text-indigo-500" />
-              <span className="hidden sm:inline">{getCurrentDateLabel()}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <Calendar className="w-4 h-4 text-indigo-500 shrink-0" />
+              <span className="hidden sm:inline truncate max-w-[120px] lg:max-w-none">{getCurrentDateLabel()}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </button>
 
             {dateDropdownOpen && (
@@ -214,7 +202,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMobileMenuClick }) => {
           </div>
 
           {/* Quick Action Button & Dropdown */}
-          <div className="relative flex items-center gap-2" ref={addRef}>
+          <div className="relative flex items-center gap-1 sm:gap-2" ref={addRef}>
             {/* Contextual primary button or Dropdown */}
             {activeTab === 'expenditure' || activeTab === 'expenditures' ? (
               <button
@@ -223,10 +211,11 @@ export const TopNav: React.FC<TopNavProps> = ({ onMobileMenuClick }) => {
                   setExpenditureToEdit(null);
                   setExpenditureModalOpen(true);
                 }}
-                className="bg-rose-600 hover:bg-rose-700 active:scale-95 text-white px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-lg shadow-rose-200 dark:shadow-none transition-all cursor-pointer shrink-0"
+                className="bg-rose-600 hover:bg-rose-700 active:scale-95 text-white px-2.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-md shadow-rose-500/20 dark:shadow-none transition-all cursor-pointer shrink-0"
               >
-                <Plus className="w-4 h-4" />
-                <span className="font-bold">Record Expense</span>
+                <Plus className="w-4 h-4 shrink-0" />
+                <span className="font-bold hidden xs:inline">Expense</span>
+                <span className="font-bold hidden sm:inline">Record Expense</span>
               </button>
             ) : (
               <button
@@ -235,10 +224,11 @@ export const TopNav: React.FC<TopNavProps> = ({ onMobileMenuClick }) => {
                   setOrderToEdit(null);
                   setOrderModalOpen(true);
                 }}
-                className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-lg shadow-indigo-200 dark:shadow-none transition-all cursor-pointer shrink-0"
+                className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-2.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-md shadow-indigo-500/20 dark:shadow-none transition-all cursor-pointer shrink-0"
               >
-                <Plus className="w-4 h-4" />
-                <span className="font-bold">New Order</span>
+                <Plus className="w-4 h-4 shrink-0" />
+                <span className="font-bold hidden xs:inline">Order</span>
+                <span className="font-bold hidden sm:inline">New Order</span>
               </button>
             )}
 
@@ -250,7 +240,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMobileMenuClick }) => {
               title="Quick Actions Menu"
               aria-label="Quick Actions Menu"
             >
-              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${quickAddOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-200 ${quickAddOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Quick Action Dropdown Menu */}

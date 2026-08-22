@@ -21,16 +21,15 @@ export const Footer: React.FC = () => {
         </span>
       </div>
 
-      {/* Center: Highlighted "developed by Pawan Paji" with 5-second shine */}
+      {/* Center: Clean "developed by Pawan Paji" badge */}
       <div 
         id="footer-developer-credit"
-        className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-amber-400/50 dark:hover:border-amber-400/50 transition-all"
+        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300"
       >
-        <Sparkles className="w-3.5 h-3.5 text-amber-500 shine-star-sparkle shrink-0" />
-        <span className="text-slate-600 dark:text-slate-300 font-medium text-xs">
+        <span className="text-slate-500 dark:text-slate-400 font-normal text-xs">
           developed by
         </span>
-        <span className="font-extrabold text-sm tracking-wide shine-text-pawan font-['Outfit'] cursor-default">
+        <span className="font-bold text-xs text-indigo-600 dark:text-indigo-400 font-['Outfit']">
           Pawan Paji
         </span>
       </div>
