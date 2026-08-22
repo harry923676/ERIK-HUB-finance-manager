@@ -23,12 +23,17 @@ import {
   ShieldCheck,
   LogOut,
   ExternalLink,
-  Link as LinkIcon
+  Link as LinkIcon,
+  FileSpreadsheet,
+  Table,
+  FileDown
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
 import { BusinessSettings } from '../types';
 import { ConfirmDialog } from './ConfirmDialog';
+import { CSVImportModal } from './CSVImportModal';
+import { analyzeAndParseCSV, CSVImportResult } from '../utils/csvUtils';
 
 export const SettingsView: React.FC = () => {
   const { 
@@ -49,6 +54,12 @@ export const SettingsView: React.FC = () => {
     resetToSampleData,
     exportDataAsJSON,
     importDataFromJSON,
+    exportAllDataCSV,
+    exportOrdersCSV,
+    exportExpendituresCSV,
+    exportCustomersCSV,
+    exportProductsCSV,
+    importParsedCSVData,
     showToast,
     orders,
     expenditures,
@@ -73,6 +84,10 @@ export const SettingsView: React.FC = () => {
   } = useAuth();
 
   const [isSyncingDrive, setIsSyncingDrive] = useState(false);
+
+  // CSV Import State
+  const [csvImportResult, setCsvImportResult] = useState<CSVImportResult | null>(null);
+  const [csvModalOpen, setCsvModalOpen] = useState(false);
 
   // Settings form states
   const [formData, setFormData] = useState<BusinessSettings>({ ...settings });
@@ -140,6 +155,40 @@ export const SettingsView: React.FC = () => {
     reader.readAsText(file);
     // Reset file input
     e.target.value = '';
+  };
+
+  const handleCSVFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (text) {
+        const result = analyzeAndParseCSV(text);
+        const totalRecords = 
+          result.counts.orders + 
+          result.counts.expenditures + 
+          result.counts.customers + 
+          result.counts.products;
+
+        if (totalRecords === 0 && result.warnings.length > 0) {
+          showToast('Could not find recognizable business data in this CSV file.', 'error');
+          return;
+        }
+
+        setCsvImportResult(result);
+        setCsvModalOpen(true);
+      }
+    };
+    reader.readAsText(file);
+    // Reset file input
+    e.target.value = '';
+  };
+
+  const handleConfirmCSVImport = (mode: 'merge' | 'replace') => {
+    if (!csvImportResult) return;
+    importParsedCSVData(csvImportResult.parsedData, mode);
   };
 
   return (
@@ -754,7 +803,153 @@ export const SettingsView: React.FC = () => {
         )}
       </div>
 
-      {/* 6. Data Backup, Export & Restore */}
+      {/* 6. CSV Data Export & Spreadsheet Reporting */}
+      <div id="settings-csv-export-card" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-100 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <FileSpreadsheet className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-800 dark:text-white font-['Outfit']">
+                CSV Export & External Spreadsheet Reporting
+              </h3>
+              <p className="text-xs text-slate-400">
+                Export orders, expenditures, customers, and product catalogue for Excel, Google Sheets, or tax reporting
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              Excel & Sheets Ready
+            </span>
+          </div>
+        </div>
+
+        {/* Primary All-in-One CSV Export Card */}
+        <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50/70 via-teal-50/40 to-slate-50/60 dark:from-emerald-950/30 dark:via-slate-800/40 dark:to-slate-800/60 border border-emerald-200/80 dark:border-emerald-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white font-['Outfit']">
+                Download Complete Business CSV Backup
+              </h4>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+                All Tables
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400 max-w-xl leading-relaxed">
+              Downloads your entire business database including {orders.length} orders, {expenditures.length} expense records, {customers.length} customers, product catalogue, and payment logs in a clean, UTF-8 formatted CSV file.
+            </p>
+          </div>
+
+          <button
+            id="download-full-csv-btn"
+            type="button"
+            onClick={exportAllDataCSV}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md shadow-emerald-500/20 transition-all cursor-pointer shrink-0"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download CSV</span>
+          </button>
+        </div>
+
+        {/* Granular Table CSV Exports & CSV Import */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
+          {/* Orders CSV */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-slate-800 dark:text-white flex items-center gap-1.5">
+                  <ShoppingBag className="w-3.5 h-3.5 text-indigo-500" /> Orders & Invoices
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                  {orders.length}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Order details, customer info, delivery dates, and balances.
+              </p>
+            </div>
+            <button
+              onClick={exportOrdersCSV}
+              className="flex items-center justify-center gap-1.5 w-full py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-xl transition-colors cursor-pointer"
+            >
+              <FileDown className="w-3.5 h-3.5" /> Export Orders (.csv)
+            </button>
+          </div>
+
+          {/* Expenditures CSV */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-slate-800 dark:text-white flex items-center gap-1.5">
+                  <Receipt className="w-3.5 h-3.5 text-rose-500" /> Expenditures
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300">
+                  {expenditures.length}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Business purchases, categories, vendors, and cost breakdown.
+              </p>
+            </div>
+            <button
+              onClick={exportExpendituresCSV}
+              className="flex items-center justify-center gap-1.5 w-full py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-xl transition-colors cursor-pointer"
+            >
+              <FileDown className="w-3.5 h-3.5" /> Export Expenses (.csv)
+            </button>
+          </div>
+
+          {/* Customers CSV */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-slate-800 dark:text-white flex items-center gap-1.5">
+                  <Building className="w-3.5 h-3.5 text-cyan-500" /> Customer List
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-900/60 text-cyan-700 dark:text-cyan-300">
+                  {customers.length}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Customer directory, contact numbers, emails, and balances.
+              </p>
+            </div>
+            <button
+              onClick={exportCustomersCSV}
+              className="flex items-center justify-center gap-1.5 w-full py-1.5 text-xs font-semibold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/60 hover:bg-cyan-100 dark:hover:bg-cyan-900/60 rounded-xl transition-colors cursor-pointer"
+            >
+              <FileDown className="w-3.5 h-3.5" /> Export Customers (.csv)
+            </button>
+          </div>
+
+          {/* CSV Import */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-slate-800 dark:text-white flex items-center gap-1.5">
+                  <Upload className="w-3.5 h-3.5 text-emerald-500" /> Import CSV Data
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+                  Import
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Upload CSV file with orders, expenses, or customer lists.
+              </p>
+            </div>
+            <label className="flex items-center justify-center gap-1.5 w-full py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 rounded-xl transition-colors cursor-pointer">
+              <Upload className="w-3.5 h-3.5" /> Upload CSV
+              <input type="file" accept=".csv,text/csv" onChange={handleCSVFileUpload} className="hidden" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* 7. Data Backup, JSON Export & Restore */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
           <Database className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -817,6 +1012,14 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* CSV Import Modal */}
+      <CSVImportModal
+        isOpen={csvModalOpen}
+        onClose={() => setCsvModalOpen(false)}
+        importResult={csvImportResult}
+        onConfirm={handleConfirmCSVImport}
+      />
 
       {/* Confirmation Dialogs */}
       <ConfirmDialog

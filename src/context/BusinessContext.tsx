@@ -23,6 +23,14 @@ import {
   calculateItemTotal
 } from '../utils/calculations';
 import { getSampleData, defaultSettings, defaultCategories, defaultProducts, defaultExpenseProducts, defaultExpensePurposes } from '../utils/sampleData';
+import { 
+  downloadCSVFile, 
+  generateUnifiedBusinessCSV, 
+  generateOrdersCSV, 
+  generateExpendituresCSV, 
+  generateCustomersCSV, 
+  generateProductsCSV 
+} from '../utils/csvUtils';
 
 export interface ToastItem {
   id: string;
@@ -156,6 +164,21 @@ interface BusinessContextType {
   exportDataAsJSON: () => void;
   importDataJSON: (jsonStr: string) => boolean;
   importDataFromJSON: (jsonStr: string) => boolean;
+  exportAllDataCSV: () => void;
+  exportOrdersCSV: () => void;
+  exportExpendituresCSV: () => void;
+  exportCustomersCSV: () => void;
+  exportProductsCSV: () => void;
+  importParsedCSVData: (
+    data: {
+      orders?: Order[];
+      expenditures?: Expenditure[];
+      customers?: Customer[];
+      products?: Product[];
+      settings?: Partial<BusinessSettings>;
+    },
+    mode: 'merge' | 'replace'
+  ) => boolean;
 
   // Computed Values
   financialSummary: FinancialSummary;
@@ -1059,6 +1082,136 @@ export const BusinessProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [showToast]);
 
+  // CSV EXPORT FUNCTIONS
+  const exportAllDataCSV = useCallback(() => {
+    const csv = generateUnifiedBusinessCSV({
+      settings,
+      orders,
+      expenditures,
+      customers,
+      products,
+      expenseProducts
+    });
+    const dateTag = new Date().toISOString().split('T')[0];
+    const cleanBizName = (settings.business_name || 'Business').replace(/[^a-zA-Z0-9-_]/g, '_');
+    downloadCSVFile(csv, `${cleanBizName}_Full_Business_Backup_${dateTag}.csv`);
+    showToast('Complete business dataset downloaded as CSV.', 'success');
+  }, [settings, orders, expenditures, customers, products, expenseProducts, showToast]);
+
+  const exportOrdersCSV = useCallback(() => {
+    const csv = generateOrdersCSV(orders);
+    const dateTag = new Date().toISOString().split('T')[0];
+    downloadCSVFile(csv, `Orders_Invoices_${dateTag}.csv`);
+    showToast(`Exported ${orders.length} orders to CSV.`, 'success');
+  }, [orders, showToast]);
+
+  const exportExpendituresCSV = useCallback(() => {
+    const csv = generateExpendituresCSV(expenditures);
+    const dateTag = new Date().toISOString().split('T')[0];
+    downloadCSVFile(csv, `Expenditures_Expenses_${dateTag}.csv`);
+    showToast(`Exported ${expenditures.length} expenditure records to CSV.`, 'success');
+  }, [expenditures, showToast]);
+
+  const exportCustomersCSV = useCallback(() => {
+    const csv = generateCustomersCSV(customers, orders);
+    const dateTag = new Date().toISOString().split('T')[0];
+    downloadCSVFile(csv, `Customer_Directory_${dateTag}.csv`);
+    showToast(`Exported ${customers.length} customer records to CSV.`, 'success');
+  }, [customers, orders, showToast]);
+
+  const exportProductsCSV = useCallback(() => {
+    const csv = generateProductsCSV(products);
+    const dateTag = new Date().toISOString().split('T')[0];
+    downloadCSVFile(csv, `Product_Catalogue_${dateTag}.csv`);
+    showToast(`Exported ${products.length} products to CSV.`, 'success');
+  }, [products, showToast]);
+
+  // CSV IMPORT HANDLER
+  const importParsedCSVData = useCallback((
+    imported: {
+      orders?: Order[];
+      expenditures?: Expenditure[];
+      customers?: Customer[];
+      products?: Product[];
+      settings?: Partial<BusinessSettings>;
+    },
+    mode: 'merge' | 'replace'
+  ): boolean => {
+    try {
+      let importedCount = 0;
+
+      if (imported.orders && imported.orders.length > 0) {
+        if (mode === 'replace') {
+          setOrders(imported.orders);
+        } else {
+          setOrders(prev => {
+            const existingIds = new Set(prev.map(o => o.id));
+            const existingNumbers = new Set(prev.map(o => o.order_number.toLowerCase()));
+            const newOrders = imported.orders!.filter(
+              o => !existingIds.has(o.id) && !existingNumbers.has(o.order_number.toLowerCase())
+            );
+            return [...newOrders, ...prev];
+          });
+        }
+        importedCount += imported.orders.length;
+      }
+
+      if (imported.expenditures && imported.expenditures.length > 0) {
+        if (mode === 'replace') {
+          setExpenditures(imported.expenditures);
+        } else {
+          setExpenditures(prev => {
+            const existingIds = new Set(prev.map(e => e.id));
+            const newExps = imported.expenditures!.filter(e => !existingIds.has(e.id));
+            return [...newExps, ...prev];
+          });
+        }
+        importedCount += imported.expenditures.length;
+      }
+
+      if (imported.customers && imported.customers.length > 0) {
+        if (mode === 'replace') {
+          setCustomers(imported.customers);
+        } else {
+          setCustomers(prev => {
+            const existingNames = new Set(prev.map(c => c.name.trim().toLowerCase()));
+            const existingPhones = new Set(prev.map(c => c.phone?.trim()).filter(Boolean));
+            const newCusts = imported.customers!.filter(
+              c => !existingNames.has(c.name.trim().toLowerCase()) &&
+                   (!c.phone || !existingPhones.has(c.phone.trim()))
+            );
+            return [...prev, ...newCusts];
+          });
+        }
+        importedCount += imported.customers.length;
+      }
+
+      if (imported.products && imported.products.length > 0) {
+        if (mode === 'replace') {
+          setProducts(imported.products);
+        } else {
+          setProducts(prev => {
+            const existingNames = new Set(prev.map(p => p.name.trim().toLowerCase()));
+            const newProds = imported.products!.filter(p => !existingNames.has(p.name.trim().toLowerCase()));
+            return [...prev, ...newProds];
+          });
+        }
+        importedCount += imported.products.length;
+      }
+
+      if (imported.settings) {
+        setSettings(prev => ({ ...prev, ...imported.settings }));
+      }
+
+      showToast(`Successfully imported ${importedCount} records from CSV (${mode === 'merge' ? 'Merged' : 'Replaced'}).`, 'success');
+      return true;
+    } catch (err) {
+      console.error('Error importing CSV data:', err);
+      showToast('An error occurred while importing CSV data.', 'error');
+      return false;
+    }
+  }, [showToast]);
+
   // COMPUTED ENGINE MEMOS
   const financialSummary = useMemo(() => {
     return calculateFinancialSummary(orders, expenditures, dateFilter, customStartDate, customEndDate);
@@ -1148,6 +1301,12 @@ export const BusinessProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         exportDataAsJSON: exportDataJSON,
         importDataJSON,
         importDataFromJSON: importDataJSON,
+        exportAllDataCSV,
+        exportOrdersCSV,
+        exportExpendituresCSV,
+        exportCustomersCSV,
+        exportProductsCSV,
+        importParsedCSVData,
         financialSummary,
         monthlyFinancials,
         categoryBreakdowns,
