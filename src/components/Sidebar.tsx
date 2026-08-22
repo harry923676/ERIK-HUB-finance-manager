@@ -13,9 +13,14 @@ import {
   TrendingUp,
   X,
   ShieldCheck,
-  Package
+  Package,
+  Cloud,
+  CloudCheck,
+  RefreshCw,
+  Smartphone
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -43,6 +48,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setExpenditureModalOpen,
     setExpenditureToEdit
   } = useBusiness();
+
+  const { 
+    user, 
+    isAuthenticated, 
+    isGoogleLinked, 
+    openAuthModal, 
+    syncStatus, 
+    lastSyncTime 
+  } = useAuth();
 
   const navItems = [
     {
@@ -195,9 +209,59 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </nav>
         </div>
 
+        {/* Cloud Sync & Account Widget */}
+        {!collapsed ? (
+          <div className="mt-auto px-3 py-2">
+            <div 
+              id="sidebar-cloud-sync-card"
+              onClick={() => {
+                if (!isAuthenticated) {
+                  openAuthModal('google');
+                } else {
+                  handleNavClick('settings');
+                }
+              }}
+              className="p-3 bg-slate-800/80 hover:bg-slate-800 rounded-2xl border border-slate-700/60 cursor-pointer transition-all group"
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Cloud className={`w-4 h-4 ${isGoogleLinked ? 'text-emerald-400' : 'text-indigo-400'}`} />
+                  <span className="text-[11px] font-bold text-white tracking-tight">
+                    {isAuthenticated ? (isGoogleLinked ? 'Google Drive Synced' : 'Phone Account') : 'Cloud Backup'}
+                  </span>
+                </div>
+                <span className={`w-2 h-2 rounded-full ${
+                  syncStatus === 'synced' ? 'bg-emerald-400 animate-pulse' :
+                  syncStatus === 'syncing' ? 'bg-amber-400 animate-spin' :
+                  isAuthenticated ? 'bg-indigo-400' : 'bg-slate-500'
+                }`} />
+              </div>
+
+              <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                <span className="truncate max-w-[130px]">
+                  {isAuthenticated ? (user?.name || user?.email || user?.phone) : 'Sign in to auto-sync'}
+                </span>
+                <span className="text-[10px] text-indigo-400 font-semibold group-hover:underline">
+                  {isAuthenticated ? 'Manage' : 'Sign In'}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-auto px-2 py-2 flex justify-center">
+            <button
+              onClick={() => openAuthModal('google')}
+              title={isAuthenticated ? `Logged in: ${user?.name}` : 'Sign in / Sync'}
+              className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-400 flex items-center justify-center transition-colors"
+            >
+              <Cloud className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         {/* Bottom Financial / Plan Widget in Sleek Interface */}
         {!collapsed && (
-          <div className="mt-auto p-4 mx-3 mb-3 bg-slate-800 rounded-2xl border border-slate-700/50">
+          <div className="p-4 mx-3 mb-3 bg-slate-800/60 rounded-2xl border border-slate-700/40">
             <div className="flex items-center justify-between text-xs text-slate-400 uppercase tracking-widest mb-1">
               <span>Running Profit</span>
               <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${

@@ -16,9 +16,17 @@ import {
   Receipt,
   Tag,
   Package,
-  ArrowRight
+  ArrowRight,
+  Cloud,
+  RefreshCw,
+  Smartphone,
+  ShieldCheck,
+  LogOut,
+  ExternalLink,
+  Link as LinkIcon
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
+import { useAuth } from '../context/AuthContext';
 import { BusinessSettings } from '../types';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -41,8 +49,30 @@ export const SettingsView: React.FC = () => {
     resetToSampleData,
     exportDataAsJSON,
     importDataFromJSON,
-    showToast 
+    showToast,
+    orders,
+    expenditures,
+    customers,
+    activityLogs
   } = useBusiness();
+
+  const {
+    user,
+    isAuthenticated,
+    isGoogleLinked,
+    openAuthModal,
+    linkGoogleAccount,
+    logout,
+    syncStatus,
+    lastSyncTime,
+    driveBackupInfo,
+    autoSyncEnabled,
+    setAutoSyncEnabled,
+    syncNow,
+    restoreFromDrive
+  } = useAuth();
+
+  const [isSyncingDrive, setIsSyncingDrive] = useState(false);
 
   // Settings form states
   const [formData, setFormData] = useState<BusinessSettings>({ ...settings });
@@ -476,12 +506,260 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* 5. Data Backup, Export & Restore */}
+      {/* 5. Google Drive & Cloud Synchronization Card */}
+      <div id="settings-google-drive-card" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-100 dark:border-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <Cloud className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-800 dark:text-white font-['Outfit']">
+                Google Drive & Cloud Synchronization
+              </h3>
+              <p className="text-xs text-slate-400">
+                Continuous encrypted cloud backups saved directly to your personal Google Drive
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isAuthenticated ? (
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                syncStatus === 'synced' 
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                  : syncStatus === 'syncing'
+                  ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                  : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${
+                  syncStatus === 'synced' ? 'bg-emerald-500 animate-pulse' :
+                  syncStatus === 'syncing' ? 'bg-amber-500 animate-spin' : 'bg-indigo-500'
+                }`} />
+                {syncStatus === 'syncing' ? 'Syncing...' : isGoogleLinked ? 'Drive Synced' : 'Phone Account'}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                <span className="w-2 h-2 rounded-full bg-slate-400" />
+                Offline Mode (Local Storage)
+              </span>
+            )}
+          </div>
+        </div>
+
+        {isAuthenticated ? (
+          <div className="space-y-4">
+            {/* User Profile Banner */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70 gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-sm overflow-hidden shrink-0">
+                  {user?.photoURL ? (
+                    <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</span>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white font-['Outfit']">
+                      {user?.name}
+                    </h4>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                      {user?.provider === 'google' ? 'Google Account' : 'Phone Account'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {user?.email || user?.phone || 'Logged in user'}
+                  </p>
+                  {isGoogleLinked && user?.googleEmail && user.provider === 'phone' && (
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5 font-medium">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Linked Drive: {user.googleEmail}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {!isGoogleLinked && (
+                  <button
+                    type="button"
+                    onClick={linkGoogleAccount}
+                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <LinkIcon className="w-3.5 h-3.5" />
+                    <span>Link Google Drive</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    showToast('Signed out of cloud account', 'info');
+                  }}
+                  className="px-3 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-xl text-xs font-semibold border border-rose-200 dark:border-rose-900/50 transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Sync Controls & Info Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 flex flex-col justify-between space-y-3">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      Cloud Sync Actions
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      {lastSyncTime ? `Last: ${new Date(lastSyncTime).toLocaleTimeString()}` : 'Not synced yet'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Push current orders & finances to Google Drive, or restore your previous cloud state anytime.
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={isSyncingDrive}
+                    onClick={async () => {
+                      setIsSyncingDrive(true);
+                      try {
+                        const res = await syncNow(() => ({
+                          orders,
+                          expenditures,
+                          customers,
+                          products,
+                          expenseProducts,
+                          expensePurposes,
+                          categories,
+                          settings,
+                          activityLogs
+                        }), true);
+                        if (res.success) showToast(res.message, 'success');
+                        else showToast(res.message, 'warning');
+                      } catch (e: any) {
+                        showToast(e.message || 'Sync error', 'error');
+                      } finally {
+                        setIsSyncingDrive(false);
+                      }
+                    }}
+                    className="flex-1 py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSyncingDrive ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Cloud className="w-3.5 h-3.5" />
+                    )}
+                    <span>Backup Now to Drive</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isSyncingDrive}
+                    onClick={async () => {
+                      if (!window.confirm('Restore records from Google Drive backup? Any unbacked local modifications will be replaced.')) return;
+                      setIsSyncingDrive(true);
+                      try {
+                        const res = await restoreFromDrive((data) => {
+                          importDataFromJSON(JSON.stringify(data));
+                        });
+                        if (res.success) showToast(res.message, 'success');
+                        else showToast(res.message, 'warning');
+                      } catch (e: any) {
+                        showToast(e.message || 'Restore error', 'error');
+                      } finally {
+                        setIsSyncingDrive(false);
+                      }
+                    }}
+                    className="py-2.5 px-3.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Restore from Drive</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Automatic Sync Preferences */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/70 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      Automatic Real-Time Sync
+                    </span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={autoSyncEnabled}
+                        onChange={(e) => setAutoSyncEnabled(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    When active, changes to invoices, payments, expenditures, and customers are quietly saved to your Google Drive in the background.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-200/60 dark:border-slate-700/60 mt-3">
+                  <span className="flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                    Drive File: erik_hub_finance_backup.json
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-indigo-50/30 to-purple-50/40 dark:from-slate-800/70 dark:via-slate-800/40 dark:to-slate-800/60 border border-indigo-100 dark:border-slate-700 text-center space-y-4">
+            <div className="max-w-md mx-auto">
+              <h4 className="font-bold text-sm text-slate-800 dark:text-white">
+                Log In or Sign Up to Enable Google Drive Cloud Sync
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                Connect with your Google Account or Phone Number. All your business records, orders, invoices, and expense records will be safely backed up to your personal Google Drive so you can access or sync them anytime from any device.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => openAuthModal('google')}
+                className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-600 shadow-xs active:scale-95 transition-all cursor-pointer"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                </svg>
+                <span>Continue with Google</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openAuthModal('phone')}
+                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer"
+              >
+                <Smartphone className="w-4 h-4 text-emerald-400" />
+                <span>Sign in with Phone</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 6. Data Backup, Export & Restore */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
           <Database className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
           <h3 className="text-base font-bold text-slate-800 dark:text-white font-['Outfit']">
-            Data Management & Offline Backups
+            Local JSON Files & Offline Data
           </h3>
         </div>
 

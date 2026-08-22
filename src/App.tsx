@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { BusinessProvider, useBusiness } from './context/BusinessContext';
 import { Sidebar } from './components/Sidebar';
 import { TopNav } from './components/TopNav';
@@ -21,6 +22,8 @@ import { AddExpenditureModal } from './components/AddExpenditureModal';
 import { RecordPaymentModal } from './components/RecordPaymentModal';
 import { InvoiceModal } from './components/InvoiceModal';
 import { CustomDateRangeModal } from './components/CustomDateRangeModal';
+import { AuthModal } from './components/AuthModal';
+import { DriveRestorePromptModal } from './components/DriveRestorePromptModal';
 import { Footer } from './components/Footer';
 import { ToastContainer } from './components/ToastContainer';
 import { motion, AnimatePresence } from 'motion/react';
@@ -46,8 +49,54 @@ const MainLayout: React.FC = () => {
     selectedOrderForInvoice,
     setSelectedOrderForInvoice,
     customDateModalOpen,
-    setCustomDateModalOpen
+    setCustomDateModalOpen,
+    orders,
+    expenditures,
+    customers,
+    products,
+    expenseProducts,
+    expensePurposes,
+    categories,
+    settings,
+    activityLogs
   } = useBusiness();
+
+  const { triggerAutoSync, isGoogleLinked } = useAuth();
+  const isInitialMount = useRef(true);
+
+  // Auto-sync to Google Drive whenever data state is modified
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    if (isGoogleLinked) {
+      triggerAutoSync(() => ({
+        orders,
+        expenditures,
+        customers,
+        products,
+        expenseProducts,
+        expensePurposes,
+        categories,
+        settings,
+        activityLogs
+      }));
+    }
+  }, [
+    orders, 
+    expenditures, 
+    customers, 
+    products, 
+    expenseProducts, 
+    expensePurposes, 
+    categories, 
+    settings, 
+    activityLogs, 
+    isGoogleLinked, 
+    triggerAutoSync
+  ]);
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -154,6 +203,12 @@ const MainLayout: React.FC = () => {
         onClose={() => setCustomDateModalOpen(false)}
       />
 
+      {/* Auth & Google / Phone Login Modal */}
+      <AuthModal />
+
+      {/* Google Drive Backup Detected Restore Prompt Modal */}
+      <DriveRestorePromptModal />
+
       {/* Global Toast System */}
       <ToastContainer />
     </div>
@@ -162,8 +217,10 @@ const MainLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <BusinessProvider>
-      <MainLayout />
-    </BusinessProvider>
+    <AuthProvider>
+      <BusinessProvider>
+        <MainLayout />
+      </BusinessProvider>
+    </AuthProvider>
   );
 }
