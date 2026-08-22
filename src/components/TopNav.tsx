@@ -135,20 +135,8 @@ export const TopNav: React.FC<TopNavProps> = ({ onMobileMenuClick }) => {
           </div>
         </div>
 
-        {/* Right Side: Global Search + Developer Credit + Controls */}
+        {/* Right Side: Global Search + Controls */}
         <div className="flex items-center gap-2.5 sm:gap-4 lg:gap-5">
-          {/* Header Developer Credit */}
-          <div 
-            id="header-developer-credit"
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 bg-slate-100/90 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 shadow-2xs select-none transition-colors shrink-0"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500 shine-star-sparkle shrink-0" />
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline">developed by</span>
-            <span className="font-extrabold tracking-wide shine-text-pawan font-['Outfit'] cursor-default text-xs sm:text-xs">
-              Pawan Paji
-            </span>
-          </div>
-
           {/* Search Bar */}
           <div className="relative hidden md:block">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
