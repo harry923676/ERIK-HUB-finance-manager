@@ -107,17 +107,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div
           id="mobile-sidebar-backdrop"
           onClick={() => setMobileOpen && setMobileOpen(false)}
-          className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm lg:hidden transition-opacity"
+          className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs lg:hidden transition-opacity"
         />
       )}
 
       {/* Sidebar Container */}
       <aside
         id="app-sidebar"
-        className={`fixed lg:static top-0 bottom-0 left-0 z-40 flex flex-col bg-slate-900 text-slate-400 border-r border-slate-800/80 transition-all duration-300 ease-in-out shrink-0 select-none ${
-          collapsed ? 'w-20' : 'w-64'
+        className={`fixed lg:static top-0 bottom-0 left-0 z-50 flex flex-col bg-slate-900 text-slate-400 border-r border-slate-800/80 transition-all duration-300 ease-in-out shrink-0 select-none ${
+          collapsed ? 'w-20' : 'w-72 sm:w-64'
         } ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         {/* Brand Header */}

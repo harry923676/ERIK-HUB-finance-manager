@@ -113,23 +113,23 @@ export const TopNav: React.FC<TopNavProps> = ({ onMobileMenuClick }) => {
     <>
       <header id="top-nav-bar" className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 z-30 transition-colors">
         {/* Left Side: Mobile Menu + Page Title & Subtitle */}
-        <div className="flex items-center gap-3">
-          {onMobileMenuClick && (
-            <button
-              id="mobile-menu-toggle-btn"
-              onClick={onMobileMenuClick}
-              className="p-2 -ml-1 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl lg:hidden"
-              aria-label="Toggle menu"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-          )}
+        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+          <button
+            id="mobile-menu-toggle-btn"
+            type="button"
+            onClick={onMobileMenuClick}
+            className="flex items-center justify-center w-10 h-10 min-w-[40px] text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 rounded-xl lg:hidden border border-slate-200/80 dark:border-slate-700/80 shadow-2xs transition-all cursor-pointer shrink-0"
+            aria-label="Open navigation menu"
+            title="Open Menu"
+          >
+            <Menu className="w-5 h-5 text-slate-700 dark:text-slate-200" strokeWidth={2.2} />
+          </button>
           
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white font-['Outfit'] tracking-tight">
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-xl font-bold text-slate-800 dark:text-white font-['Outfit'] tracking-tight truncate">
               {getPageTitle()}
             </h1>
-            <p className="text-[11px] text-slate-400 font-medium uppercase tracking-tighter hidden sm:block">
+            <p className="text-[11px] text-slate-400 font-medium uppercase tracking-tighter hidden sm:block truncate">
               {settings.tax_id ? `GSTIN: ${settings.tax_id} • ` : ''}{getCurrentDateLabel()}
             </p>
           </div>

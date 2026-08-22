@@ -26,6 +26,9 @@ import { ToastContainer } from './components/ToastContainer';
 import { motion, AnimatePresence } from 'motion/react';
 
 const MainLayout: React.FC = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+
   const { 
     activeTab, 
     isOrderModalOpen, 
@@ -75,12 +78,17 @@ const MainLayout: React.FC = () => {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
       {/* 1. Left Collapsible Sidebar */}
-      <Sidebar />
+      <Sidebar 
+        collapsed={sidebarCollapsed}
+        setCollapsed={setSidebarCollapsed}
+        mobileOpen={mobileMenuOpen}
+        setMobileOpen={setMobileMenuOpen}
+      />
 
       {/* 2. Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Navbar */}
-        <TopNav />
+        <TopNav onMobileMenuClick={() => setMobileMenuOpen(true)} />
 
         {/* Dynamic View Scrollable Area */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
